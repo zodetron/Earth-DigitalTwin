@@ -1,25 +1,4 @@
-version: "3.9"
-
 services:
-  # ── PostgreSQL ────────────────────────────────────────────────────────────────
-  postgres:
-    image: postgres:16-alpine
-    container_name: earthmind-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: earthmind_x
-      POSTGRES_USER: earthmind
-      POSTGRES_PASSWORD: earthmind_dev
-    ports:
-      - "5432:5432"
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U earthmind -d earthmind_x"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   # ── AI Service (FastAPI + XGBoost + Claude) ───────────────────────────────────
   ai-service:
     build: ./ai-service
@@ -28,17 +7,16 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://earthmind:earthmind_dev@postgres:5432/earthmind_x
+      DATABASE_URL: postgresql://earthmind:earthmind_dev@host.docker.internal:5432/earthmind_x
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-your-key-here}
       MODELS_PATH: /app/models
       DATASETS_PATH: /app/datasets
     volumes:
-      - ./ai-service/models:/app/models   # persists trained model
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - ./ai-service/models:/app/models
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -53,16 +31,16 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      DATABASE_URL: postgresql://earthmind:earthmind_dev@postgres:5432/earthmind_x
+      DATABASE_URL: postgresql://earthmind:earthmind_dev@host.docker.internal:5432/earthmind_x
       AI_SERVICE_URL: http://ai-service:8000
       CORS_ORIGIN: http://localhost:5173
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
-      postgres:
-        condition: service_healthy
       ai-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -81,6 +59,3 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-
-volumes:
-  pg_data:
