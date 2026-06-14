@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: earthmind_x
+      POSTGRES_USER: earthmind
+      POSTGRES_PASSWORD: earthmind_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://earthmind:earthmind_dev@postgres:5432/earthmind_x
+      AI_SERVICE_URL: http://ai-service:8000
+      NODE_ENV: development
+    depends_on:
+      - postgres
+
+  ai-service:
+    build: ./ai-service
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://earthmind:earthmind_dev@postgres:5432/earthmind_x
+    volumes:
+      - ./datasets:/app/datasets
+      - ./ai-service/models:/app/models
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  pg_data:

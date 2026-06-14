@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+    --background: 220 25% 4%;
+    --foreground: 210 40% 98%;
+    --card: 220 20% 6%;
+    --card-foreground: 210 40% 98%;
+    --border: 217 20% 12%;
+    --input: 217 20% 12%;
+    --primary: 199 100% 50%;
+    --primary-foreground: 220 25% 4%;
+    --secondary: 217 20% 12%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 20% 10%;
+    --muted-foreground: 215 16% 55%;
+    --accent: 199 100% 50%;
+    --accent-foreground: 220 25% 4%;
+    --destructive: 0 84% 60%;
+    --ring: 199 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    @apply bg-space-dark text-foreground;
+    background: radial-gradient(ellipse at 50% 0%, #071428 0%, #020408 60%);
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #020408;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 212, 255, 0.3);
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 212, 255, 0.6);
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-xl;
+  }
+  .glass-panel-strong {
+    @apply bg-black/40 backdrop-blur-xl border border-white/15 rounded-xl;
+  }
+  .glow-text {
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+  }
+  .glow-border {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2), inset 0 0 20px rgba(0, 212, 255, 0.02);
+  }
+  .risk-critical {
+    @apply text-red-400;
+    text-shadow: 0 0 10px rgba(255, 0, 51, 0.6);
+  }
+  .risk-high {
+    @apply text-orange-400;
+    text-shadow: 0 0 10px rgba(255, 102, 0, 0.6);
+  }
+  .risk-moderate {
+    @apply text-yellow-400;
+    text-shadow: 0 0 10px rgba(255, 204, 0, 0.6);
+  }
+  .risk-low {
+    @apply text-green-400;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+  }
+  .metric-card {
+    @apply glass-panel p-4 flex flex-col gap-2 hover:border-cyan-500/30 transition-all duration-300;
+  }
+  .font-display {
+    font-family: 'Orbitron', sans-serif;
+  }
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Cinematic scan line effect */
+.scan-overlay::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.4), transparent);
+  animation: scanLine 4s linear infinite;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Grid background pattern */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Animated gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #00d4ff, #0066cc, #00ff88);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
