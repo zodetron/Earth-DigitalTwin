@@ -9,48 +9,43 @@ import { fireApi } from '@/services/fireApi'
 import { cn, riskBgClass, riskToLevel, formatNumber } from '@/lib/utils'
 import type { GlobeLayer, FutureMode, CityWithRisk } from '@/types'
 
-// ─── Layer config ─────────────────────────────────────────────────────────────
-
-const LAYERS: { id: GlobeLayer; label: string; icon: string; color: string }[] = [
-  { id: 'risk', label: 'Risk Index', icon: '⚠️', color: 'border-purple-500/60 text-purple-400' },
-  { id: 'flood', label: 'Flood', icon: '🌊', color: 'border-blue-500/60 text-blue-400' },
-  { id: 'fire', label: 'Wildfire', icon: '🔥', color: 'border-orange-500/60 text-orange-400' },
-  { id: 'climate', label: 'Climate', icon: '🌡️', color: 'border-green-500/60 text-green-400' },
+const LAYERS: { id: GlobeLayer; label: string; icon: string; activeClass: string }[] = [
+  { id: 'risk',    label: 'Risk Index', icon: '⚠️', activeClass: 'bg-violet-100 border-violet-400 text-violet-700' },
+  { id: 'flood',   label: 'Flood',      icon: '🌊', activeClass: 'bg-blue-100 border-blue-400 text-blue-700' },
+  { id: 'fire',    label: 'Wildfire',   icon: '🔥', activeClass: 'bg-orange-100 border-orange-400 text-orange-700' },
+  { id: 'climate', label: 'Climate',    icon: '🌡️', activeClass: 'bg-emerald-100 border-emerald-400 text-emerald-700' },
 ]
 
 const FUTURE_MODES: { id: FutureMode; label: string }[] = [
   { id: 'current', label: 'Now' },
-  { id: '2030', label: '2030' },
-  { id: '2040', label: '2040' },
-  { id: '2050', label: '2050' },
-  { id: 'worst', label: 'Worst' },
+  { id: '2030',    label: '2030' },
+  { id: '2040',    label: '2040' },
+  { id: '2050',    label: '2050' },
+  { id: 'worst',   label: 'Worst' },
 ]
-
-// ─── Nav links ────────────────────────────────────────────────────────────────
 
 const NAV = [
-  { to: '/flood', label: 'FLOOD', icon: '🌊' },
-  { to: '/fire', label: 'FIRE', icon: '🔥' },
-  { to: '/climate', label: 'CLIMATE', icon: '🌡️' },
-  { to: '/simulation', label: 'SIM', icon: '⚡' },
-  { to: '/earthgpt', label: 'GPT', icon: '🤖' },
-  { to: '/analytics', label: 'ANALYTICS', icon: '📊' },
+  { to: '/flood',      label: 'Flood',      icon: '🌊' },
+  { to: '/fire',       label: 'Fire',        icon: '🔥' },
+  { to: '/simulation', label: 'Simulation',  icon: '⚡' },
+  { to: '/earthgpt',   label: 'EarthGPT',   icon: '🤖' },
+  { to: '/analytics',  label: 'Analytics',  icon: '📊' },
 ]
 
-// ─── Sub-panels ───────────────────────────────────────────────────────────────
+// ─── Earth Health Ring ────────────────────────────────────────────────────────
 
 function EarthHealthRing({ score }: { score: number }) {
-  const color = score >= 70 ? '#22c55e' : score >= 50 ? '#eab308' : '#ef4444'
-  const r = 36
+  const color = score >= 70 ? '#16a34a' : score >= 50 ? '#ca8a04' : '#dc2626'
+  const r = 34
   const circ = 2 * Math.PI * r
   const dash = (score / 100) * circ
 
   return (
-    <div className="relative w-24 h-24">
-      <svg viewBox="0 0 88 88" className="w-full h-full -rotate-90">
-        <circle cx="44" cy="44" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
+    <div className="relative w-20 h-20">
+      <svg viewBox="0 0 84 84" className="w-full h-full -rotate-90">
+        <circle cx="42" cy="42" r={r} fill="none" stroke="#e2e8f0" strokeWidth="6" />
         <circle
-          cx="44" cy="44" r={r} fill="none"
+          cx="42" cy="42" r={r} fill="none"
           stroke={color} strokeWidth="6"
           strokeDasharray={`${dash} ${circ}`}
           strokeLinecap="round"
@@ -58,62 +53,58 @@ function EarthHealthRing({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-display text-xl font-bold" style={{ color }}>{score.toFixed(0)}</span>
-        <span className="font-mono text-[9px] text-white/40">/ 100</span>
+        <span className="text-lg font-bold" style={{ color }}>{score.toFixed(0)}</span>
+        <span className="text-[9px] text-slate-400 font-mono">/ 100</span>
       </div>
     </div>
   )
 }
 
-function CityDetailPanel({
-  city,
-  onClose,
-}: {
-  city: CityWithRisk
-  onClose: () => void
-}) {
+// ─── City Detail Panel ────────────────────────────────────────────────────────
+
+function CityDetailPanel({ city, onClose }: { city: CityWithRisk; onClose: () => void }) {
   const risk = city.risk
   const level = riskToLevel(risk?.earthmindRiskIndex ?? 0)
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      className="glass-panel border border-white/10 p-4 flex flex-col gap-4 max-h-[70vh] overflow-y-auto"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 10 }}
+      className="bg-white rounded-2xl border border-slate-200 shadow-xl p-4 flex flex-col gap-3 max-h-[65vh] overflow-y-auto"
     >
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="font-display text-base text-white">{city.name}</h3>
-          <p className="font-mono text-xs text-white/40">
+          <h3 className="font-semibold text-slate-800 text-sm">{city.name}</h3>
+          <p className="text-[10px] text-slate-400 font-mono mt-0.5">
             {city.country} · {city.latitude.toFixed(2)}°, {city.longitude.toFixed(2)}°
           </p>
         </div>
-        <button onClick={onClose} className="text-white/30 hover:text-white/80 font-mono">✕</button>
+        <button onClick={onClose} className="text-slate-300 hover:text-slate-600 text-lg leading-none">✕</button>
       </div>
 
-      <div className="flex items-center gap-3">
-        <span className={cn('px-2 py-0.5 rounded border font-mono text-[10px] uppercase', riskBgClass(level))}>
+      <div className="flex items-center gap-2">
+        <span className={cn('px-2 py-0.5 rounded-full border text-[10px] font-semibold uppercase', riskBgClass(level))}>
           {level}
         </span>
-        <span className="font-mono text-xs text-white/60">
-          Pop: {city.population ? formatNumber(city.population) : '—'}
-        </span>
+        {city.population && (
+          <span className="text-[10px] text-slate-500">Pop: {formatNumber(city.population)}</span>
+        )}
       </div>
 
       {risk && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           {[
-            { label: 'Risk Index', value: (risk.earthmindRiskIndex * 100).toFixed(1) + '%', accent: true },
-            { label: 'Flood Risk', value: (risk.floodRisk * 100).toFixed(1) + '%' },
-            { label: 'Fire Risk', value: (risk.fireRisk * 100).toFixed(1) + '%' },
+            { label: 'Risk Index',     value: (risk.earthmindRiskIndex * 100).toFixed(1) + '%', hi: true },
+            { label: 'Flood Risk',     value: (risk.floodRisk * 100).toFixed(1) + '%' },
+            { label: 'Fire Risk',      value: (risk.fireRisk * 100).toFixed(1) + '%' },
             { label: 'Climate Stress', value: (risk.climateStress * 100).toFixed(1) + '%' },
-            { label: 'Env. Risk', value: (risk.environmentalRisk * 100).toFixed(1) + '%' },
-            { label: 'Pop. Exposure', value: (risk.populationExposure * 100).toFixed(1) + '%' },
+            { label: 'Env. Risk',      value: (risk.environmentalRisk * 100).toFixed(1) + '%' },
+            { label: 'Pop. Exposure',  value: (risk.populationExposure * 100).toFixed(1) + '%' },
           ].map((m) => (
-            <div key={m.label} className="bg-white/5 rounded-lg p-2">
-              <p className="font-mono text-[10px] text-white/40">{m.label}</p>
-              <p className={cn('font-display text-sm mt-0.5', m.accent ? 'text-yellow-300' : 'text-white')}>
+            <div key={m.label} className="bg-slate-50 rounded-xl p-2 border border-slate-100">
+              <p className="text-[9px] text-slate-400 font-mono uppercase">{m.label}</p>
+              <p className={cn('text-sm font-bold mt-0.5', m.hi ? 'text-violet-600' : 'text-slate-700')}>
                 {m.value}
               </p>
             </div>
@@ -121,18 +112,18 @@ function CityDetailPanel({
         </div>
       )}
 
-      <div className="flex gap-2 mt-auto">
+      <div className="flex gap-2 mt-1">
         <Link
           to="/flood"
           state={{ cityId: city.id }}
-          className="flex-1 text-center font-mono text-[10px] py-1.5 rounded border border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
+          className="flex-1 text-center text-[10px] font-semibold py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
         >
           Flood Detail
         </Link>
         <Link
           to="/earthgpt"
           state={{ context: `Risk assessment for ${city.name}, ${city.country}` }}
-          className="flex-1 text-center font-mono text-[10px] py-1.5 rounded border border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors"
+          className="flex-1 text-center text-[10px] font-semibold py-1.5 rounded-lg border border-violet-200 bg-violet-50 text-violet-600 hover:bg-violet-100 transition-colors"
         >
           Ask EarthGPT
         </Link>
@@ -141,7 +132,7 @@ function CityDetailPanel({
   )
 }
 
-// ─── Main Command Center ─────────────────────────────────────────────────────
+// ─── Command Center ───────────────────────────────────────────────────────────
 
 export default function CommandCenter() {
   const navigate = useNavigate()
@@ -159,7 +150,6 @@ export default function CommandCenter() {
 
   const [selectedCityData, setSelectedCityData] = useState<CityWithRisk | null>(null)
 
-  // Load globe points
   const { data: healthData } = useQuery({
     queryKey: ['earth', 'health'],
     queryFn: earthApi.getHealth,
@@ -178,18 +168,9 @@ export default function CommandCenter() {
     staleTime: 5 * 60_000,
   })
 
-  // Sync to store
-  useEffect(() => {
-    if (healthData) setEarthHealth(healthData)
-  }, [healthData, setEarthHealth])
-
-  useEffect(() => {
-    if (pointsData) setGlobePoints(pointsData)
-  }, [pointsData, setGlobePoints])
-
-  useEffect(() => {
-    if (fireData) setFireHotspots(fireData)
-  }, [fireData, setFireHotspots])
+  useEffect(() => { if (healthData) setEarthHealth(healthData) }, [healthData, setEarthHealth])
+  useEffect(() => { if (pointsData) setGlobePoints(pointsData) }, [pointsData, setGlobePoints])
+  useEffect(() => { if (fireData) setFireHotspots(fireData) }, [fireData, setFireHotspots])
 
   const handleCityClick = async (cityId: string) => {
     setSelectedCity(null)
@@ -203,20 +184,20 @@ export default function CommandCenter() {
   const handleScan = async () => {
     if (isScanning) return
     startScan()
-    try {
-      await earthApi.triggerScan()
-    } finally {
-      stopScan()
-    }
+    try { await earthApi.triggerScan() } finally { stopScan() }
   }
 
   const health = earthHealth
   const healthScore = health?.score ?? 0
-  const healthColor = healthScore >= 70 ? 'text-green-400' : healthScore >= 50 ? 'text-yellow-400' : 'text-red-400'
+  const scoreColor = healthScore >= 70 ? 'text-emerald-600' : healthScore >= 50 ? 'text-amber-600' : 'text-red-600'
+  const dotColor   = healthScore >= 70 ? 'bg-emerald-500' : healthScore >= 50 ? 'bg-amber-500' : 'bg-red-500'
+
+  const pointCount = activeLayer === 'fire' ? fireHotspots.length : globePoints.length
 
   return (
-    <div className="w-screen h-screen bg-space-dark overflow-hidden relative">
-      {/* ── Full-screen Globe ──────────────────────────────── */}
+    <div className="w-screen h-screen bg-slate-100 overflow-hidden relative">
+
+      {/* ── Full-screen Globe ───────────────────────────── */}
       <div className="absolute inset-0">
         <EarthGlobe
           activeLayer={activeLayer}
@@ -234,68 +215,69 @@ export default function CommandCenter() {
           <motion.div
             key="scan-ring"
             initial={{ scale: 0.8, opacity: 0.8 }}
-            animate={{ scale: 2.5, opacity: 0 }}
+            animate={{ scale: 2.8, opacity: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="absolute inset-0 m-auto w-64 h-64 rounded-full border-2 border-yellow-400/60 pointer-events-none"
-            style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+            className="absolute rounded-full border-2 border-blue-500/50 pointer-events-none"
+            style={{ width: 200, height: 200, top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
           />
         )}
       </AnimatePresence>
 
-      {/* ── TOP BAR ───────────────────────────────────────── */}
-      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-5 py-3 bg-gradient-to-b from-black/70 to-transparent pointer-events-none">
-        <div className="pointer-events-auto flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          <span className="font-display text-sm text-white/90 tracking-wider">EARTHMIND X</span>
-          <span className="font-mono text-[10px] text-white/30 border border-white/10 px-2 py-0.5 rounded">
+      {/* ── TOP BAR ────────────────────────────────────── */}
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-5 py-3 bg-white/70 backdrop-blur-md border-b border-slate-200/80">
+        {/* Brand */}
+        <div className="flex items-center gap-3">
+          <div className={cn('w-2 h-2 rounded-full animate-pulse', dotColor)} />
+          <span className="font-bold text-slate-800 tracking-wider text-sm">EARTHMIND X</span>
+          <span className="text-[10px] text-slate-400 border border-slate-200 px-2 py-0.5 rounded-full font-mono">
             COMMAND CENTER
           </span>
         </div>
 
-        <div className="pointer-events-auto flex items-center gap-6">
+        {/* Nav */}
+        <div className="flex items-center gap-1">
           {NAV.map((n) => (
             <button
               key={n.to}
               onClick={() => navigate(n.to)}
-              className="font-mono text-[10px] text-white/40 hover:text-white/90 transition-colors flex items-center gap-1"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all"
             >
               <span>{n.icon}</span> {n.label}
             </button>
           ))}
         </div>
 
-        <div className="pointer-events-auto flex items-center gap-4">
-          <div className="text-right">
-            <p className="font-mono text-[10px] text-white/30 uppercase">Earth Health</p>
-            <p className={cn('font-display text-lg font-bold', healthColor)}>
-              {health ? `${healthScore.toFixed(1)}/100` : '—'}
-            </p>
-          </div>
-          <div className={cn('w-2 h-2 rounded-full', healthScore >= 60 ? 'bg-green-400' : 'bg-red-400', 'animate-pulse')} />
+        {/* Earth Health */}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-slate-400 font-mono uppercase">Earth Health</span>
+          <span className={cn('text-base font-bold', scoreColor)}>
+            {health ? `${healthScore.toFixed(1)}` : '—'}
+            <span className="text-[10px] text-slate-400 font-normal">/100</span>
+          </span>
         </div>
       </div>
 
-      {/* ── LEFT PANEL ────────────────────────────────────── */}
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 w-52">
-        {/* Earth health ring */}
+      {/* ── LEFT PANEL ─────────────────────────────────── */}
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 w-52">
+        {/* Health ring */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="glass-panel border border-white/10 p-4 flex flex-col items-center gap-2"
+          className="bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col items-center gap-3"
         >
-          <p className="font-mono text-[10px] text-white/40 uppercase tracking-widest">Earth Health</p>
+          <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest self-start">Earth Health</p>
           {health && <EarthHealthRing score={healthScore} />}
           {health && (
-            <div className="w-full space-y-1.5 mt-1">
+            <div className="w-full space-y-1.5">
               {[
-                { label: 'Cities Monitored', val: health.totalCitiesMonitored.toLocaleString() },
-                { label: 'Critical Zones', val: health.criticalZones.toString(), warn: true },
-                { label: 'High Risk', val: health.highRiskZones.toString(), warn: true },
+                { label: 'Cities Monitored', val: health.totalCitiesMonitored.toLocaleString(), warn: false },
+                { label: 'Critical Zones',   val: health.criticalZones.toString(),              warn: true },
+                { label: 'High Risk',        val: health.highRiskZones.toString(),              warn: true },
               ].map((m) => (
                 <div key={m.label} className="flex justify-between items-center">
-                  <span className="font-mono text-[10px] text-white/30">{m.label}</span>
-                  <span className={cn('font-mono text-[10px]', m.warn ? 'text-orange-400' : 'text-white/70')}>
+                  <span className="text-[10px] text-slate-400">{m.label}</span>
+                  <span className={cn('text-[10px] font-semibold', m.warn ? 'text-orange-500' : 'text-slate-600')}>
                     {m.val}
                   </span>
                 </div>
@@ -304,50 +286,48 @@ export default function CommandCenter() {
           )}
         </motion.div>
 
-        {/* Quick stats */}
+        {/* Live data */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
-          className="glass-panel border border-white/10 p-4"
+          className="bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-sm p-4"
         >
-          <p className="font-mono text-[10px] text-white/40 uppercase tracking-widest mb-3">Live Data</p>
+          <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest mb-3">Live Data</p>
           <div className="space-y-2">
             {[
-              { icon: '📍', label: 'Globe Points', val: globePoints.length.toLocaleString() },
+              { icon: '📍', label: 'Risk Points',   val: globePoints.length.toLocaleString() },
               { icon: '🔥', label: 'Fire Hotspots', val: fireHotspots.length.toLocaleString() },
-              { icon: '🌊', label: 'Flood Cities', val: globePoints.length.toLocaleString() },
+              { icon: '🌊', label: 'Flood Cities',  val: globePoints.length.toLocaleString() },
             ].map((m) => (
               <div key={m.label} className="flex items-center justify-between">
-                <span className="font-mono text-[10px] text-white/40">
-                  {m.icon} {m.label}
-                </span>
-                <span className="font-mono text-[10px] text-white/80">{m.val}</span>
+                <span className="text-[10px] text-slate-500">{m.icon} {m.label}</span>
+                <span className="text-[10px] font-semibold text-slate-700">{m.val}</span>
               </div>
             ))}
           </div>
         </motion.div>
       </div>
 
-      {/* ── RIGHT PANEL ───────────────────────────────────── */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 w-56">
-        {/* Layer controls */}
+      {/* ── RIGHT PANEL ────────────────────────────────── */}
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 w-52">
+        {/* Layer selector */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="glass-panel border border-white/10 p-4"
+          className="bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-sm p-4"
         >
-          <p className="font-mono text-[10px] text-white/40 uppercase tracking-widest mb-3">Data Layer</p>
+          <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest mb-3">Data Layer</p>
           <div className="flex flex-col gap-1.5">
             {LAYERS.map((l) => (
               <button
                 key={l.id}
                 onClick={() => setActiveLayer(l.id)}
                 className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-lg border font-mono text-xs transition-all',
+                  'flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-all',
                   activeLayer === l.id
-                    ? l.color + ' bg-white/5'
-                    : 'border-white/10 text-white/40 hover:text-white/70',
+                    ? l.activeClass
+                    : 'border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50',
                 )}
               >
                 <span>{l.icon}</span>
@@ -360,26 +340,24 @@ export default function CommandCenter() {
           </div>
         </motion.div>
 
-        {/* Future mode */}
+        {/* Future scenario */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
-          className="glass-panel border border-white/10 p-4"
+          className="bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-sm p-4"
         >
-          <p className="font-mono text-[10px] text-white/40 uppercase tracking-widest mb-3">
-            Future Scenario
-          </p>
+          <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest mb-3">Scenario</p>
           <div className="flex flex-wrap gap-1.5">
             {FUTURE_MODES.map((m) => (
               <button
                 key={m.id}
                 onClick={() => setFutureMode(m.id)}
                 className={cn(
-                  'font-mono text-[10px] px-2.5 py-1.5 rounded border transition-colors',
+                  'text-[10px] font-semibold px-2.5 py-1.5 rounded-lg border transition-colors',
                   futureMode === m.id
-                    ? 'border-yellow-500/60 bg-yellow-500/10 text-yellow-400'
-                    : 'border-white/10 text-white/40 hover:text-white/70',
+                    ? 'border-amber-400 bg-amber-50 text-amber-700'
+                    : 'border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50',
                 )}
               >
                 {m.label}
@@ -387,8 +365,8 @@ export default function CommandCenter() {
             ))}
           </div>
           {futureMode !== 'current' && (
-            <p className="font-mono text-[10px] text-yellow-400/70 mt-2">
-              ⚠️ Projected scenario for {futureMode === 'worst' ? 'worst case' : futureMode}
+            <p className="text-[10px] text-amber-600 mt-2 font-medium">
+              ⚠ Projected: {futureMode === 'worst' ? 'worst case' : futureMode}
             </p>
           )}
         </motion.div>
@@ -398,30 +376,22 @@ export default function CommandCenter() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
-          className="glass-panel border border-white/10 p-4"
+          className="bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-sm p-4"
         >
-          <p className="font-mono text-[10px] text-white/40 uppercase tracking-widest mb-3">Controls</p>
-          <div className="flex flex-col gap-2">
+          <p className="text-[10px] text-slate-400 font-mono uppercase tracking-widest mb-3">Controls</p>
+          <div className="flex flex-col gap-1.5">
             {[
-              {
-                label: globeAutoRotate ? 'Auto-Rotate: ON' : 'Auto-Rotate: OFF',
-                onClick: toggleRotation,
-                active: globeAutoRotate,
-              },
-              {
-                label: showAtmosphere ? 'Atmosphere: ON' : 'Atmosphere: OFF',
-                onClick: () => toggleLayer('showAtmosphere'),
-                active: showAtmosphere,
-              },
+              { label: `Auto-Rotate: ${globeAutoRotate ? 'ON' : 'OFF'}`, onClick: toggleRotation, active: globeAutoRotate },
+              { label: `Atmosphere: ${showAtmosphere ? 'ON' : 'OFF'}`, onClick: () => toggleLayer('showAtmosphere'), active: showAtmosphere },
             ].map((c) => (
               <button
                 key={c.label}
                 onClick={c.onClick}
                 className={cn(
-                  'font-mono text-[10px] px-3 py-2 rounded-lg border transition-colors text-left',
+                  'text-[10px] font-medium px-3 py-2 rounded-xl border transition-colors text-left',
                   c.active
-                    ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-400'
-                    : 'border-white/10 text-white/40',
+                    ? 'border-sky-300 bg-sky-50 text-sky-700'
+                    : 'border-slate-200 text-slate-400 hover:text-slate-600',
                 )}
               >
                 {c.label}
@@ -436,56 +406,51 @@ export default function CommandCenter() {
             <CityDetailPanel
               key={selectedCityData.id}
               city={selectedCityData}
-              onClose={() => {
-                setSelectedCityData(null)
-                setSelectedCity(null)
-              }}
+              onClose={() => { setSelectedCityData(null); setSelectedCity(null) }}
             />
           )}
         </AnimatePresence>
       </div>
 
-      {/* ── BOTTOM TOOLBAR ────────────────────────────────── */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3">
-        <div className="glass-panel border border-white/10 px-4 py-3 flex items-center gap-4">
-          {/* Layer quick-select */}
+      {/* ── BOTTOM TOOLBAR ─────────────────────────────── */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-sm px-4 py-2.5 flex items-center gap-3">
           {LAYERS.map((l) => (
             <button
               key={l.id}
               onClick={() => setActiveLayer(l.id)}
               className={cn(
-                'flex items-center gap-1.5 font-mono text-[10px] uppercase transition-colors px-2 py-1 rounded',
-                activeLayer === l.id ? 'text-white bg-white/10' : 'text-white/30 hover:text-white/70',
+                'flex items-center gap-1.5 text-[10px] font-semibold uppercase px-2.5 py-1.5 rounded-xl transition-all',
+                activeLayer === l.id ? l.activeClass + ' border' : 'text-slate-400 hover:text-slate-700',
               )}
             >
               {l.icon} {l.label}
             </button>
           ))}
 
-          <div className="w-px h-5 bg-white/10" />
+          <div className="w-px h-4 bg-slate-200" />
 
-          {/* Scan */}
           <button
             onClick={handleScan}
             disabled={isScanning}
             className={cn(
-              'flex items-center gap-1.5 font-mono text-[10px] px-3 py-1.5 rounded border transition-all',
+              'flex items-center gap-1.5 text-[10px] font-semibold px-3 py-1.5 rounded-xl border transition-all',
               isScanning
-                ? 'border-yellow-500/60 bg-yellow-500/10 text-yellow-400 animate-pulse'
-                : 'border-white/20 text-white/50 hover:border-yellow-500/40 hover:text-yellow-400',
+                ? 'border-blue-300 bg-blue-50 text-blue-600 animate-pulse'
+                : 'border-slate-200 text-slate-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50',
             )}
           >
             {isScanning ? '⟳ SCANNING…' : '⟳ SCAN EARTH'}
           </button>
 
-          <div className="w-px h-5 bg-white/10" />
+          <div className="w-px h-4 bg-slate-200" />
 
-          {/* Page links */}
           {NAV.slice(0, 4).map((n) => (
             <Link
               key={n.to}
               to={n.to}
-              className="font-mono text-[10px] text-white/30 hover:text-white/80 transition-colors px-1"
+              className="text-[16px] hover:scale-125 transition-transform"
+              title={n.label}
             >
               {n.icon}
             </Link>
@@ -493,18 +458,15 @@ export default function CommandCenter() {
         </div>
       </div>
 
-      {/* ── Coordinate readout (decorative) ───────────────── */}
-      <div className="absolute bottom-4 left-4 font-mono text-[10px] text-white/20 pointer-events-none">
-        <p>LAT {(Math.random() * 180 - 90).toFixed(4)}°</p>
-        <p>LNG {(Math.random() * 360 - 180).toFixed(4)}°</p>
-        <p>ALT 280 km</p>
+      {/* ── Bottom corner info ─────────────────────────── */}
+      <div className="absolute bottom-4 left-4 text-[10px] text-slate-400 font-mono pointer-events-none leading-relaxed">
+        <p>{pointCount.toLocaleString()} points · {activeLayer.toUpperCase()} layer</p>
+        <p>EMX v2.0 · XGBoost R²=0.81</p>
       </div>
 
-      {/* ── Status ticker ─────────────────────────────────── */}
-      <div className="absolute bottom-4 right-4 font-mono text-[10px] text-white/20 text-right pointer-events-none">
+      <div className="absolute bottom-4 right-4 text-[10px] text-slate-400 font-mono text-right pointer-events-none leading-relaxed">
         <p>VIIRS · 192,000 detections</p>
         <p>{globePoints.length.toLocaleString()} cities monitored</p>
-        <p>EMX v2.0 · XGBoost R²=0.81</p>
       </div>
     </div>
   )

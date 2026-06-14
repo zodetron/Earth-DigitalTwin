@@ -1,37 +1,29 @@
-/**
- * EarthGlobe — Three.js + three-globe 3D Digital Twin Earth
- * Imperative setup in useEffect; updates via separate layer effect.
- */
 import { useEffect, useRef, useCallback } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import ThreeGlobe from 'three-globe'
 import type { GlobeLayer, GlobePoint, FireHotspot } from '@/types'
 
-// ─── Color palettes ──────────────────────────────────────────────────────────
-
 const RISK_COLORS: Record<string, string> = {
-  CRITICAL: '#ef4444',
-  HIGH: '#f97316',
-  MODERATE: '#eab308',
-  LOW: '#22c55e',
+  CRITICAL: '#dc2626',
+  HIGH: '#ea580c',
+  MODERATE: '#ca8a04',
+  LOW: '#16a34a',
 }
 
 function floodColor(prob: number): string {
-  if (prob >= 0.6) return '#1e40af'
+  if (prob >= 0.6) return '#1d4ed8'
   if (prob >= 0.4) return '#2563eb'
-  if (prob >= 0.2) return '#60a5fa'
-  return '#93c5fd'
+  if (prob >= 0.2) return '#3b82f6'
+  return '#60a5fa'
 }
 
 function fireColor(severity: number): string {
-  if (severity >= 0.75) return '#ef4444'
-  if (severity >= 0.5) return '#f97316'
-  if (severity >= 0.25) return '#fbbf24'
-  return '#fef08a'
+  if (severity >= 0.75) return '#dc2626'
+  if (severity >= 0.5) return '#ea580c'
+  if (severity >= 0.25) return '#f59e0b'
+  return '#fcd34d'
 }
-
-// ─── Props ───────────────────────────────────────────────────────────────────
 
 interface EarthGlobeProps {
   activeLayer: GlobeLayer
@@ -41,8 +33,6 @@ interface EarthGlobeProps {
   showAtmosphere: boolean
   onCityClick?: (cityId: string, cityName: string) => void
 }
-
-// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function EarthGlobe({
   activeLayer,
@@ -61,7 +51,6 @@ export default function EarthGlobe({
   const rafRef = useRef<number>(0)
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2())
 
-  // ── Initial Three.js setup ──────────────────────────────────────────────
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -69,49 +58,37 @@ export default function EarthGlobe({
     const W = container.clientWidth
     const H = container.clientHeight
 
-    // Scene
     const scene = new THREE.Scene()
+    scene.background = new THREE.Color(0xf0f4f8)
     sceneRef.current = scene
 
-    // Camera
-    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000)
-    camera.position.set(0, 0, 280)
+    const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 2000)
+    camera.position.set(0, 0, 300)
     cameraRef.current = camera
 
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    const renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.setSize(W, H)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    renderer.setClearColor(0x000000, 0)
+    renderer.shadowMap.enabled = true
     container.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
-    // Lights
-    scene.add(new THREE.AmbientLight(0x9999aa, 0.5))
-    const sun = new THREE.DirectionalLight(0xffffff, 1.2)
-    sun.position.set(300, 200, 300)
+    // Daylight lighting rig
+    scene.add(new THREE.AmbientLight(0xffffff, 0.9))
+    const sun = new THREE.DirectionalLight(0xfff4e0, 1.6)
+    sun.position.set(400, 200, 300)
     scene.add(sun)
-    const fill = new THREE.DirectionalLight(0x334466, 0.4)
-    fill.position.set(-200, -100, -200)
+    const fill = new THREE.DirectionalLight(0xd0e8ff, 0.5)
+    fill.position.set(-300, -100, -200)
     scene.add(fill)
 
-    // Starfield
-    const starGeo = new THREE.BufferGeometry()
-    const stars = new Float32Array(6000)
-    for (let i = 0; i < 6000; i++) {
-      stars[i] = (Math.random() - 0.5) * 2000
-    }
-    starGeo.setAttribute('position', new THREE.BufferAttribute(stars, 3))
-    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, sizeAttenuation: true })
-    scene.add(new THREE.Points(starGeo, starMat))
-
-    // Globe
+    // Globe with blue-marble day texture
     const globe = new ThreeGlobe({ waitForGlobeReady: true, animateIn: false })
-      .globeImageUrl('/earth-night.jpg')
+      .globeImageUrl('/earth-blue-marble.jpg')
       .bumpImageUrl('/earth-topology.png')
       .showAtmosphere(showAtmosphere)
-      .atmosphereColor('#3a8fc7')
-      .atmosphereAltitude(0.18)
+      .atmosphereColor('#7eb8e8')
+      .atmosphereAltitude(0.12)
       .pointsMerge(false)
       .pointAltitude(0.015)
       .pointRadius(0.3)
@@ -119,19 +96,17 @@ export default function EarthGlobe({
     globeRef.current = globe
     scene.add(globe)
 
-    // OrbitControls
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
     controls.dampingFactor = 0.06
     controls.rotateSpeed = 0.5
     controls.autoRotate = autoRotate
-    controls.autoRotateSpeed = 0.6
-    controls.minDistance = 150
+    controls.autoRotateSpeed = 0.5
+    controls.minDistance = 160
     controls.maxDistance = 600
     controls.enablePan = false
     controlsRef.current = controls
 
-    // Animation loop
     const animate = () => {
       rafRef.current = requestAnimationFrame(animate)
       controls.update()
@@ -139,7 +114,6 @@ export default function EarthGlobe({
     }
     animate()
 
-    // Resize handler
     const onResize = () => {
       const w = container.clientWidth
       const h = container.clientHeight
@@ -157,31 +131,25 @@ export default function EarthGlobe({
         container.removeChild(renderer.domElement)
       }
     }
-  }, []) // only once — other effects handle dynamic updates
+  }, [])
 
-  // ── Auto-rotate toggle ──────────────────────────────────────────────────
   useEffect(() => {
-    if (controlsRef.current) {
-      controlsRef.current.autoRotate = autoRotate
-    }
+    if (controlsRef.current) controlsRef.current.autoRotate = autoRotate
   }, [autoRotate])
 
-  // ── Atmosphere toggle ───────────────────────────────────────────────────
   useEffect(() => {
     globeRef.current?.showAtmosphere(showAtmosphere)
   }, [showAtmosphere])
 
-  // ── Layer data ──────────────────────────────────────────────────────────
   useEffect(() => {
     const globe = globeRef.current
     if (!globe) return
 
     if (activeLayer === 'fire') {
-      // Fire hotspot points
       const pts = fireHotspots.map((h) => ({
         lat: h.latitude,
         lng: h.longitude,
-        size: Math.min(0.8, 0.2 + h.severity_score * 0.6),
+        size: Math.min(0.9, 0.25 + h.severity_score * 0.65),
         color: fireColor(h.severity_score),
         label: h.country_name,
       }))
@@ -191,13 +159,13 @@ export default function EarthGlobe({
         .pointLng('lng')
         .pointRadius((d: object) => (d as { size: number }).size)
         .pointColor('color')
-        .pointAltitude(0.01)
+        .pointAltitude(0.012)
         .atmosphereColor('#f97316')
     } else if (activeLayer === 'flood') {
       const pts = globePoints.map((p) => ({
         ...p,
-        color: p.riskScore !== undefined ? floodColor(p.riskScore) : '#60a5fa',
-        size: p.riskScore !== undefined ? Math.max(0.2, p.riskScore * 0.7) : 0.3,
+        color: p.riskScore !== undefined ? floodColor(p.riskScore) : '#3b82f6',
+        size: p.riskScore !== undefined ? Math.max(0.25, p.riskScore * 0.75) : 0.3,
       }))
       globe
         .pointsData(pts)
@@ -208,11 +176,10 @@ export default function EarthGlobe({
         .pointAltitude(0.015)
         .atmosphereColor('#3b82f6')
     } else {
-      // Risk / default layer
       const pts = globePoints.map((p) => ({
         ...p,
-        color: p.riskLevel ? RISK_COLORS[p.riskLevel] : '#22c55e',
-        size: p.riskScore !== undefined ? Math.max(0.2, p.riskScore * 0.8) : p.size,
+        color: p.riskLevel ? RISK_COLORS[p.riskLevel] : '#16a34a',
+        size: p.riskScore !== undefined ? Math.max(0.25, p.riskScore * 0.85) : p.size,
       }))
       globe
         .pointsData(pts)
@@ -221,11 +188,10 @@ export default function EarthGlobe({
         .pointRadius((d: object) => (d as { size: number }).size)
         .pointColor('color')
         .pointAltitude(0.015)
-        .atmosphereColor('#3a8fc7')
+        .atmosphereColor('#7eb8e8')
     }
   }, [activeLayer, globePoints, fireHotspots])
 
-  // ── Click detection ─────────────────────────────────────────────────────
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const rect = containerRef.current?.getBoundingClientRect()
     if (!rect) return
@@ -242,14 +208,10 @@ export default function EarthGlobe({
 
     const raycaster = new THREE.Raycaster()
     raycaster.setFromCamera(mouseRef.current, camera)
-
     const hits = raycaster.intersectObjects(globe.children, true)
     if (hits.length === 0) return
 
-    // Find the point data closest to the click
-    const intersect = hits[0]
-    // Walk up to find the ThreeGlobe managed object with __data
-    let obj: THREE.Object3D | null = intersect.object
+    let obj: THREE.Object3D | null = hits[0].object
     while (obj && !(obj as { __data?: Record<string, unknown> }).__data) {
       obj = obj.parent
     }
