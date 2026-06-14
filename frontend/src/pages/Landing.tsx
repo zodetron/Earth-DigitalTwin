@@ -91,6 +91,14 @@ export default function Landing() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/analytics')}
+            className="px-8 py-4 glass-panel font-display font-bold text-sm tracking-widest text-purple-400 border-purple-500/40 hover:border-purple-400/60 transition-all"
+          >
+            MISSION CONTROL
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/earthgpt')}
             className="px-8 py-4 glass-panel font-display font-bold text-sm tracking-widest text-cyan-400 border-cyan-500/40 hover:border-cyan-400/60 transition-all"
           >

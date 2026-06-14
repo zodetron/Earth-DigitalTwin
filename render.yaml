@@ -1,0 +1,42 @@
+services:
+  # ── Backend (Node.js / Express) ─────────────────────────────────────────────
+  - type: web
+    name: earthmind-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        sync: false          # set in Render dashboard from Neon
+      - key: AI_SERVICE_URL
+        value: https://earthmind-ai.onrender.com
+      - key: CORS_ORIGIN
+        value: https://earthmind-x.vercel.app
+    autoDeploy: true
+
+  # ── AI Service (Python / FastAPI) ────────────────────────────────────────────
+  - type: web
+    name: earthmind-ai
+    runtime: python
+    rootDir: ai-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: DATABASE_URL
+        sync: false          # set in Render dashboard from Neon
+      - key: ANTHROPIC_API_KEY
+        sync: false          # set in Render dashboard — sk-ant-...
+      - key: DATASETS_PATH
+        value: /opt/render/project/src/datasets   # not used in production
+      - key: MODELS_PATH
+        value: /opt/render/project/src/models
+    autoDeploy: true

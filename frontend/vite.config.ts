@@ -22,4 +22,18 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-three': ['three', 'three-globe', '@react-three/fiber', '@react-three/drei'],
+          'vendor-charts': ['recharts'],
+          'vendor-motion': ['framer-motion'],
+          'vendor-query': ['@tanstack/react-query', 'axios', 'zustand'],
+        },
+      },
+    },
+  },
 })

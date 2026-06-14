@@ -7,11 +7,11 @@ __pycache__/
 *.pyc
 .venv/
 venv/
-*.joblib
 .DS_Store
 .vercel
 .render
-ai-service/models/*.joblib
+# Keep trained models in git for Render deployment
+# ai-service/models/*.joblib
 node_modules/
 .env
 .DS_Store
